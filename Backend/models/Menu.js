@@ -23,9 +23,15 @@ const menuSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Vendor can hide/show item
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+
     vendorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Vendor",
       required: true,
     },
 
@@ -33,7 +39,7 @@ const menuSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "College",
       required: true,
-      index: true, //IMPORTANT (fast filtering)
+      index: true,
     },
   },
   { timestamps: true }

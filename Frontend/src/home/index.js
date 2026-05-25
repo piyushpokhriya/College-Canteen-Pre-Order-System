@@ -11,7 +11,7 @@ export default async function renderHome(root) {
 
   const title = document.createElement("h1");
   title.className = "text-4xl md:text-5xl font-bold mb-4";
-  title.textContent = "College Canteen Pre-Order System";
+  title.textContent = "Pre-Order College Canteen Management System";
 
   const subtitle = document.createElement("p");
   subtitle.className = "text-lg md:text-xl mb-2";

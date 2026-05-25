@@ -1,23 +1,33 @@
-function isValidTime() {
-  const now = new Date();
+const College = require("../models/College");
 
-  const h = now.getHours();
-  const m = now.getMinutes();
+module.exports = async function isValidTime(collegeId) {
+  try {
+    const college = await College.findById(collegeId);
 
-  const t = h * 60 + m;
-
-  const blocked = [
-    [540, 650],  // 9:00 - 10:50
-    [690, 800]   // 11:30 - 1:20
-  ];
-
-  for (let [start, end] of blocked) {
-    if (t >= start && t <= end) {
+    if (!college || !college.orderStartTime || !college.orderEndTime) {
       return false;
     }
+
+    const now = new Date();
+
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    const [startH, startM] = college.orderStartTime.split(":");
+    const [endH, endM] = college.orderEndTime.split(":");
+
+    const start = Number(startH) * 60 + Number(startM);
+    const end = Number(endH) * 60 + Number(endM);
+
+    // normal case (same day window)
+    if (start <= end) {
+      return currentTime >= start && currentTime <= end;
+    }
+
+    // overnight case (e.g. 10 PM to 2 AM)
+    return currentTime >= start || currentTime <= end;
+
+  } catch (err) {
+    console.error("Time Check Error:", err);
+    return false;
   }
-
-  return true;
-}
-
-module.exports = isValidTime;
+};

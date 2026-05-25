@@ -9,13 +9,15 @@ const {
   getVendorMenu,
   updateMenu,
   deleteMenu,
-  getTopItems 
+  getTopItems,
+  toggleAvailability,
+  applyDiscount,
 } = require("../controllers/menuController");
 
 const { verifyToken } = require("../middleware/authMiddleware");
 const authorize = require("../middleware/role");
 
-// ================= ADD ITEM (Vendor Only) =================
+// ================= ADD MENU ITEM =================
 router.post(
   "/",
   verifyToken,
@@ -25,20 +27,12 @@ router.post(
 );
 
 // ================= GET ALL MENU =================
-router.get(
-  "/",
-  verifyToken,
-  getAllMenu
-);
+router.get("/", verifyToken, getAllMenu);
 
-// ================= TOP ITEMS (NEW) =================
-router.get(
-  "/top",
-  verifyToken,
-  getTopItems
-);
+// ================= TOP ITEMS =================
+router.get("/top", verifyToken, getTopItems);
 
-// ================= GET VENDOR MENU =================
+// ================= VENDOR MENU =================
 router.get(
   "/vendor",
   verifyToken,
@@ -52,6 +46,22 @@ router.put(
   verifyToken,
   authorize("vendor"),
   updateMenu
+);
+
+// ================= TOGGLE AVAILABILITY =================
+router.put(
+  "/toggle/:id",
+  verifyToken,
+  authorize("vendor"),
+  toggleAvailability
+);
+
+// ================= APPLY DISCOUNT =================
+router.put(
+  "/discount/:id",
+  verifyToken,
+  authorize("vendor"),
+  applyDiscount
 );
 
 // ================= DELETE MENU =================

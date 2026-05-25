@@ -34,7 +34,12 @@ export async function renderVendorFilter(container, onChange) {
     };
 
   } catch (err) {
-    console.error(err);
-    container.innerHTML = "<p>Failed to load vendors</p>";
-  }
+  console.error(err);
+
+  select.innerHTML = `
+    <option value="all">All Vendors</option>
+  `;
 }
+}
+
+

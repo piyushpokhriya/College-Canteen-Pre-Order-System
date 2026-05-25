@@ -9,42 +9,46 @@ const verifyToken = (req, res, next) => {
       return res.status(401).json({ msg: "No token provided" });
     }
 
+    // safe check
     if (token.startsWith("Bearer ")) {
       token = token.split(" ")[1];
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ATTACH USER DATA PROPERLY
+    console.log("📦 DECODED TOKEN:", decoded);
+
     req.user = {
       id: decoded.id,
       role: decoded.role,
-      collegeId: decoded.collegeId,
+      collegeId: decoded.collegeId || null,
     };
 
     next();
+
   } catch (err) {
+    console.log("❌ TOKEN ERROR:", err.message);
     return res.status(401).json({ msg: "Invalid or expired token" });
   }
 };
 
 // ================= ROLE CHECKS =================
 const isAdmin = (req, res, next) => {
-  if (req.user.role !== "admin") {
+  if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({ msg: "Admin only" });
   }
   next();
 };
 
 const isVendor = (req, res, next) => {
-  if (req.user.role !== "vendor") {
+  if (!req.user || req.user.role !== "vendor") {
     return res.status(403).json({ msg: "Vendor only" });
   }
   next();
 };
 
 const isStudent = (req, res, next) => {
-  if (req.user.role !== "student") {
+  if (!req.user || req.user.role !== "student") {
     return res.status(403).json({ msg: "Student only" });
   }
   next();

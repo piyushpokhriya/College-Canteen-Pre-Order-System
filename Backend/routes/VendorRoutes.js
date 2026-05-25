@@ -1,21 +1,43 @@
 const express = require("express");
 const router = express.Router();
 
-const { verifyToken, isAdmin, isStudent } = require("../middleware/authMiddleware");
-
 const {
-  createVendor,
-  toggleStatus,
-  getVendors
+  getVendorStats,
+  applyDiscount,
+  toggleVendorCard,
+  getVendors,
 } = require("../controllers/vendorController");
 
-// Create vendor (admin only)
-router.post("/create", verifyToken, isAdmin, createVendor);
+const {
+  verifyToken,
+  isVendor,
+} = require("../middleware/authMiddleware");
 
-// Activate/Deactivate vendor (admin only)
-router.post("/toggle-status", verifyToken, isAdmin, toggleStatus);
+// ================= USER SIDE =================
+router.get("/", verifyToken, getVendors);
 
-// Get vendors (student only)
-router.get("/", verifyToken, isStudent, getVendors);
+// ================= STATS =================
+router.get(
+  "/stats",
+  verifyToken,
+  isVendor,
+  getVendorStats
+);
+
+// ================= DISCOUNT =================
+router.put(
+  "/menu/discount/:id",
+  verifyToken,
+  isVendor,
+  applyDiscount
+);
+
+// ================= TOGGLE SHOP =================
+router.put(
+  "/toggle-card",
+  verifyToken,
+  isVendor,
+  toggleVendorCard
+);
 
 module.exports = router;

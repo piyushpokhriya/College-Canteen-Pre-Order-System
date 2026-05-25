@@ -3,132 +3,195 @@ import API from "../services/api.js";
 export function renderMenu(container) {
   container.innerHTML = "";
 
-  // ================= ADD FORM =================
+  // ================= ADD MENU FORM =================
   const form = document.createElement("div");
   form.className = "p-6 bg-white rounded shadow mb-6";
 
-  const title = document.createElement("h2");
-  title.className = "text-xl font-bold mb-4";
-  title.textContent = "Add Menu Item";
+  form.innerHTML = `
+    <h2 class="text-xl font-bold mb-4">Add Menu Item</h2>
 
-  const nameInput = document.createElement("input");
-  nameInput.placeholder = "Item Name";
-  nameInput.className = "w-full p-3 mb-3 border rounded";
+    <input id="name" placeholder="Item Name" class="w-full p-2 border mb-2"/>
 
-  const priceInput = document.createElement("input");
-  priceInput.type = "number";
-  priceInput.placeholder = "Price (₹)";
-  priceInput.className = "w-full p-3 mb-3 border rounded";
+    <input id="price" type="number" placeholder="Price" class="w-full p-2 border mb-2"/>
 
-  // FILE INPUT (IMAGE)
-  const imageInput = document.createElement("input");
-  imageInput.type = "file";
-  imageInput.accept = "image/*";
-  imageInput.className = "w-full p-3 mb-3 border rounded";
+    <input id="image" type="file" class="w-full p-2 border mb-2"/>
 
-  const btn = document.createElement("button");
-  btn.innerText = "Add Item";
-  btn.className =
-    "w-full bg-purple-500 text-white py-2 rounded hover:bg-purple-600";
+    <button id="addBtn" class="bg-purple-600 text-white px-4 py-2 rounded w-full">
+      Add Item
+    </button>
+  `;
 
-  form.append(title, nameInput, priceInput, imageInput, btn);
   container.appendChild(form);
 
   // ================= MENU LIST =================
-  const listDiv = document.createElement("div");
-  listDiv.className = "grid grid-cols-1 md:grid-cols-3 gap-6";
-  container.appendChild(listDiv);
+  const list = document.createElement("div");
+  list.className = "grid grid-cols-1 md:grid-cols-3 gap-4";
+  container.appendChild(list);
 
-  // ================= FETCH MENU =================
-  async function fetchMenu() {
-    listDiv.innerHTML = "";
+  // ================= LOAD MENU =================
+  async function loadMenu() {
+    list.innerHTML = "";
 
     try {
       const res = await API.get("/menu/vendor");
       const items = res.data;
 
+      if (!items.length) {
+        list.innerHTML =
+          "<p class='text-gray-500'>No menu items found</p>";
+        return;
+      }
+
       items.forEach((item) => {
         const card = document.createElement("div");
-        card.className =
-          "bg-white p-4 rounded-xl shadow hover:shadow-lg";
+        card.className = "bg-white p-4 shadow rounded";
 
-        // IMAGE SHOW
+        const finalPrice =
+          item.discount > 0
+            ? item.price - (item.price * item.discount) / 100
+            : item.price;
+
+        // ================= IMAGE =================
         const img = document.createElement("img");
         img.src = item.image
-          ? `http://localhost:5000/uploads/${item.image}`
+          ? item.image.startsWith("http")
+            ? item.image
+            : `http://localhost:5000/uploads/${item.image}`
           : "https://via.placeholder.com/300";
 
         img.className = "w-full h-40 object-cover rounded mb-3";
 
+        // ================= INFO =================
         const name = document.createElement("h3");
         name.className = "font-bold";
         name.textContent = item.name;
 
         const price = document.createElement("p");
-        price.textContent = `₹${item.price}`;
+        price.innerHTML = `
+          <b>Price:</b> ₹${item.price} <br/>
+          <b>Final:</b> ₹${finalPrice}
+        `;
 
-        const delBtn = document.createElement("button");
-        delBtn.innerText = "Delete";
-        delBtn.className =
-          "mt-2 w-full bg-red-500 text-white py-1 rounded hover:bg-red-600";
+        const discount = document.createElement("p");
+        discount.className = "text-red-500";
+        discount.textContent = `${item.discount || 0}% OFF`;
 
-        delBtn.onclick = async () => {
+        // ================= DISCOUNT INPUT =================
+        const input = document.createElement("input");
+        input.type = "number";
+        input.placeholder = "Enter Discount %";
+        input.className = "border p-2 w-full mt-2";
+
+        // ================= APPLY DISCOUNT =================
+        const applyBtn = document.createElement("button");
+        applyBtn.textContent = "Apply / Update Discount";
+        applyBtn.className =
+          "bg-green-500 text-white px-3 py-2 mt-2 rounded w-full";
+
+        applyBtn.onclick = async () => {
           try {
-            await API.delete(`/menu/${item._id}`);
-            fetchMenu();
+            await API.put(`/vendor/menu/discount/${item._id}`, {
+              discount: Number(input.value),
+            });
+
+            loadMenu();
           } catch (err) {
-            console.error(err);
-            alert("Delete failed");
+            console.log(err);
+            alert("Failed to apply discount");
           }
         };
 
-        card.append(img, name, price, delBtn);
-        listDiv.appendChild(card);
+        // ================= REMOVE DISCOUNT =================
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "Remove Discount";
+        removeBtn.className =
+          "bg-red-500 text-white px-3 py-2 mt-2 rounded w-full";
+
+        removeBtn.onclick = async () => {
+          try {
+            await API.put(`/vendor/menu/discount/${item._id}`, {
+              discount: 0,
+            });
+
+            loadMenu();
+          } catch (err) {
+            console.log(err);
+            alert("Failed to remove discount");
+          }
+        };
+
+        // ================= DELETE ITEM =================
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete Item";
+        deleteBtn.className =
+          "bg-black text-white px-3 py-2 mt-2 rounded w-full";
+
+        deleteBtn.onclick = async () => {
+          const ok = confirm(
+            `Delete "${item.name}" permanently?`
+          );
+
+          if (!ok) return;
+
+          try {
+            await API.delete(`/menu/${item._id}`);
+
+            alert("Item deleted successfully");
+
+            loadMenu();
+          } catch (err) {
+            console.log(err);
+            alert("Failed to delete item");
+          }
+        };
+
+        // ================= APPEND =================
+        card.append(
+          img,
+          name,
+          price,
+          discount,
+          input,
+          applyBtn,
+          removeBtn,
+          deleteBtn
+        );
+
+        list.appendChild(card);
       });
     } catch (err) {
-      console.error(err);
-      listDiv.innerHTML =
+      console.log(err);
+      list.innerHTML =
         "<p class='text-red-500'>Failed to load menu</p>";
     }
   }
 
   // ================= ADD ITEM =================
-  btn.onclick = async () => {
+  form.querySelector("#addBtn").onclick = async () => {
     try {
-      if (!nameInput.value || !priceInput.value || !imageInput.files[0]) {
-        return alert("Fill all fields");
-      }
+      const name = document.querySelector("#name").value;
+      const price = document.querySelector("#price").value;
+      const image = document.querySelector("#image").files[0];
 
-      const formData = new FormData();
-      formData.append("name", nameInput.value);
-      formData.append("price", priceInput.value);
-      formData.append("image", imageInput.files[0]);
+      const fd = new FormData();
+      fd.append("name", name);
+      fd.append("price", price);
+      fd.append("image", image);
 
-      await API.post("/menu", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      await API.post("/menu", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert("Item added successfully!");
+      document.querySelector("#name").value = "";
+      document.querySelector("#price").value = "";
+      document.querySelector("#image").value = "";
 
-      // reset form
-      nameInput.value = "";
-      priceInput.value = "";
-      imageInput.value = "";
-
-      // refresh list
-      fetchMenu();
-
+      loadMenu();
     } catch (err) {
-      console.error(err);
-      alert(
-        "Error adding item: " +
-        (err.response?.data?.msg || "Server error")
-      );
+      console.log(err);
+      alert("Add item failed");
     }
   };
 
-  // initial load
-  fetchMenu();
+  loadMenu();
 }

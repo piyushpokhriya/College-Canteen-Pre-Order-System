@@ -5,40 +5,54 @@ const orderSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
     },
 
     vendorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Vendor",
-      required: true
+      required: true,
     },
 
     items: [
       {
-        name: { type: String, required: true },
-        quantity: { type: Number, required: true, min: 1 },
-        price: { type: Number, required: true, min: 0 }
-      }
+        menuId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Menu",
+        },
+        name: String,
+        quantity: Number,
+        price: Number,
+      },
     ],
 
     total: {
       type: Number,
       required: true,
-      min: 0
     },
 
     status: {
       type: String,
+      enum: ["Pending", "Preparing", "Completed", "Cancelled"],
       default: "Pending",
-      enum: ["Pending", "Preparing", "Completed", "Cancelled"]
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["Pending", "Paid", "Failed"],
+      default: "Pending",
+    },
+
+    paymentId: {
+      type: String,
+      default: "",
     },
 
     collegeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "College",
-      required: true
-    }
+      required: true,
+    },
   },
   { timestamps: true }
 );

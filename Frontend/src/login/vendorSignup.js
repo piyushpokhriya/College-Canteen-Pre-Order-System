@@ -4,7 +4,6 @@ import API from "../services/api.js";
 export function renderVendorSignup(root) {
   root.innerHTML = "";
 
-  // ================= CONTAINER =================
   const container = document.createElement("div");
   container.className =
     "max-w-md mx-auto mt-16 p-8 bg-white rounded shadow";
@@ -13,10 +12,9 @@ export function renderVendorSignup(root) {
   title.className = "text-2xl font-bold mb-6 text-center";
   title.textContent = "Vendor Signup";
 
-  const errorBox = document.createElement("p");
-  errorBox.className = "text-red-500 text-sm mb-3 hidden";
+  const messageBox = document.createElement("p");
+  messageBox.className = "text-sm mb-4 hidden";
 
-  // ================= INPUT CREATOR =================
   const createInput = (type, placeholder) => {
     const input = document.createElement("input");
     input.type = type;
@@ -31,14 +29,13 @@ export function renderVendorSignup(root) {
   const emailInput = createInput("email", "Email");
   const passwordInput = createInput("password", "Password");
 
-  // ================= SIGNUP BUTTON =================
   const signupBtn = document.createElement("button");
   signupBtn.className =
-    "w-full bg-purple-500 text-white py-3 rounded hover:bg-purple-600";
+    "w-full bg-purple-600 text-white py-3 rounded hover:bg-purple-700";
   signupBtn.textContent = "Create Vendor Account";
 
   signupBtn.onclick = async () => {
-    errorBox.classList.add("hidden");
+    messageBox.className = "text-sm mb-4 hidden";
 
     const shopName = shopInput.value.trim();
     const name = nameInput.value.trim();
@@ -47,59 +44,60 @@ export function renderVendorSignup(root) {
     const password = passwordInput.value.trim();
 
     if (!shopName || !name || !collegeName || !email || !password) {
-      errorBox.textContent = "All fields are required";
-      errorBox.classList.remove("hidden");
+      messageBox.textContent = "All fields are required";
+      messageBox.className = "text-red-500 text-sm mb-4";
       return;
     }
 
     try {
       signupBtn.disabled = true;
-      signupBtn.textContent = "Creating account...";
-
-      // ⚠️ IMPORTANT:
-      // backend currently DOES NOT create vendor separately
-      // only user signup with role=vendor
+      signupBtn.textContent = "Creating Account...";
 
       const res = await API.post("/auth/signup", {
-        name,
-        email,
-        password,
-        collegeName,
-        role: "vendor",
-      });
+      shopName,
+      name,
+      email,
+      password,
+      collegeName,
+      role: "vendor",
+    });
 
-      const data = res?.data;
+      messageBox.textContent =
+        res.data.msg ||
+        "Vendor account created. Waiting for admin approval.";
 
-      if (!data?.token) {
-        throw new Error("Signup failed");
-      }
+      messageBox.className =
+        "text-green-600 text-sm mb-4";
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", "vendor");
-
-      location.reload();
     } catch (err) {
-      console.error("Vendor signup error:", err);
-      errorBox.textContent = "Vendor signup failed";
-      errorBox.classList.remove("hidden");
+      console.error(err);
+
+      messageBox.textContent =
+        err?.response?.data?.msg ||
+        "Vendor signup failed";
+
+      messageBox.className =
+        "text-red-500 text-sm mb-4";
     } finally {
       signupBtn.disabled = false;
       signupBtn.textContent = "Create Vendor Account";
     }
   };
 
-  // ================= LOGIN LINK =================
   const toggle = document.createElement("p");
   toggle.className =
-    "mt-4 text-sm text-center text-blue-500 cursor-pointer";
-  toggle.textContent = "Already have an account? Login";
+    "mt-4 text-sm text-center text-blue-600 cursor-pointer";
 
-  toggle.onclick = () => renderVendorLogin(root);
+  toggle.textContent =
+    "Already have an account? Login";
 
-  // ================= APPEND =================
+  toggle.onclick = () => {
+    renderVendorLogin(root);
+  };
+
   container.append(
     title,
-    errorBox,
+    messageBox,
     shopInput,
     nameInput,
     collegeInput,

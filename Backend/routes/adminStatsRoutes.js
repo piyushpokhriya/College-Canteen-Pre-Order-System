@@ -2,14 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 const {
-  approveVendor,
-} = require("../controllers/adminController");
-
-const {
-  getPendingVendors,
-} = require("../controllers/adminNotificationController");
-
-const {
   getAdminStats,
 } = require("../controllers/adminStatsController");
 
@@ -21,20 +13,6 @@ router.get(
   verifyToken,
   authorize("admin"),
   getAdminStats
-);
-
-router.get(
-  "/vendors/pending",
-  verifyToken,
-  authorize("admin"),
-  getPendingVendors
-);
-
-router.put(
-  "/vendors/approve/:vendorId",
-  verifyToken,
-  authorize("admin"),
-  approveVendor
 );
 
 module.exports = router;

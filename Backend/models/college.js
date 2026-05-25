@@ -6,10 +6,15 @@ const collegeSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      trim: true
-    }
+      trim: true,
+      lowercase: true,
+    },
+    openingTime: String,
+    closingTime: String,
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("College", collegeSchema);
+module.exports =
+  mongoose.models.College ||
+  mongoose.model("College", collegeSchema);

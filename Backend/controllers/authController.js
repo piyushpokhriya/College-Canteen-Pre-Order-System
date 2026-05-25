@@ -1,36 +1,29 @@
 const User = require("../models/User");
 const College = require("../models/college");
-const Vendor = require("../models/Vendor"); 
+const Vendor = require("../models/Vendor");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 // ================= SIGNUP =================
-exports.signup = async (req, res) => {
+const signup = async (req, res) => {
   try {
-    const { name, email, password, collegeName, role } = req.body;
+    const { name, email, password, collegeName, role, shopName } = req.body;
 
-    // ===== VALIDATION =====
     if (!name || !email || !password || !collegeName || !role) {
-      return res.status(400).json({ msg: "All fields are required" });
+      return res.status(400).json({ msg: "All fields required" });
     }
 
-    // ===== NORMALIZE COLLEGE =====
-    const normalizedName = collegeName.toLowerCase().trim();
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedCollege = collegeName.toLowerCase().trim();
 
-    // ===== FIND OR CREATE COLLEGE =====
-    let college = await College.findOne({ name: normalizedName });
+    const college = await College.findOneAndUpdate(
+      { name: normalizedCollege },
+      { name: normalizedCollege },
+      { upsert: true, new: true }
+    );
 
-    if (!college) {
-      college = await College.create({ name: normalizedName });
-    }
-
-    if (!college || !college._id) {
-      return res.status(500).json({ msg: "College creation failed" });
-    }
-
-    // ===== CHECK EXISTING USER =====
     const existingUser = await User.findOne({
-      email,
+      email: normalizedEmail,
       collegeId: college._id,
     });
 
@@ -38,92 +31,67 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ msg: "User already exists" });
     }
 
-    // ===== HASH PASSWORD =====
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // ===== CREATE USER =====
     const user = await User.create({
       name,
-      email,
-      password: hashedPassword,
-      collegeId: college._id,
+      email: normalizedEmail,
+      password: await bcrypt.hash(password, 10),
       role,
+      collegeId: college._id,
     });
 
-    // ===== AUTO CREATE VENDOR (IMPORTANT FIX) =====
     if (role === "vendor") {
       await Vendor.create({
-        shopName: name + " Shop", // basic default name
+        shopName,
         owner: user._id,
-        collegeId: user.collegeId,
-        isOpen: true,
+        collegeId: college._id,
+        status: "pending",
+        isApproved: false,
+      });
+
+      return res.json({
+        msg: "Vendor request sent. Waiting for admin approval",
       });
     }
 
-    // ===== CREATE TOKEN =====
     const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-        collegeId: user.collegeId,
-      },
+      { id: user._id, role, collegeId: college._id },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // ===== RESPONSE =====
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        role: user.role,
-      },
-    });
+    return res.json({ token, user });
 
   } catch (err) {
-    console.error("Signup Error:", err.message);
-    res.status(500).json({ msg: "Server error", error: err.message });
+    console.log("SIGNUP ERROR:", err);
+    return res.status(500).json({ msg: "Server error" });
   }
 };
 
 // ================= LOGIN =================
-exports.login = async (req, res) => {
+const login = async (req, res) => {
   try {
-    const { email, password, collegeName } = req.body;
+    const { email, password } = req.body;
 
-    // ===== VALIDATION =====
-    if (!email || !password || !collegeName) {
-      return res.status(400).json({ msg: "All fields are required" });
-    }
-
-    // ===== NORMALIZE COLLEGE =====
-    const normalizedName = collegeName.toLowerCase().trim();
-
-    const college = await College.findOne({ name: normalizedName });
-
-    if (!college) {
-      return res.status(400).json({ msg: "Invalid credentials" });
-    }
-
-    // ===== FIND USER =====
     const user = await User.findOne({
-      email,
-      collegeId: college._id,
+      email: email.toLowerCase().trim(),
     });
 
-    if (!user) {
-      return res.status(400).json({ msg: "Invalid credentials" });
+    if (!user) return res.status(400).json({ msg: "Invalid credentials" });
+
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!match) return res.status(400).json({ msg: "Invalid credentials" });
+
+    if (user.role === "vendor") {
+      const vendor = await Vendor.findOne({ owner: user._id });
+
+      if (!vendor || vendor.status !== "approved") {
+        return res.status(403).json({
+          msg: "Waiting for admin approval",
+        });
+      }
     }
 
-    // ===== PASSWORD CHECK =====
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.status(400).json({ msg: "Invalid credentials" });
-    }
-
-    // ===== CREATE TOKEN =====
     const token = jwt.sign(
       {
         id: user._id,
@@ -134,18 +102,11 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // ===== RESPONSE =====
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        role: user.role,
-      },
-    });
+    return res.json({ token, user });
 
   } catch (err) {
-    console.error("Login Error:", err.message);
-    res.status(500).json({ msg: "Server error", error: err.message });
+    return res.status(500).json({ msg: "Server error" });
   }
 };
+
+module.exports = { signup, login };

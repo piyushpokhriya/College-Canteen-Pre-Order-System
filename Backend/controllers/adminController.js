@@ -1,36 +1,36 @@
-const Menu = require("../models/Menu");
+const Vendor = require("../models/Vendor");
 
-// ================= APPLY DISCOUNT =================
-exports.applyDiscount = async (req, res) => {
+// ================= APPROVE VENDOR =================
+exports.approveVendor = async (req, res) => {
   try {
-    const { discount } = req.body;
+    const { vendorId } = req.params;
 
-    // validation
-    if (discount === undefined) {
-      return res.status(400).json({ msg: "Discount value required" });
-    }
-
-    if (discount < 0 || discount > 100) {
-      return res.status(400).json({ msg: "Discount must be between 0-100" });
-    }
-
-    const menu = await Menu.findById(req.params.id);
-
-    if (!menu) {
-      return res.status(404).json({ msg: "Menu item not found" });
-    }
-
-    // apply discount
-    menu.discount = discount;
-    await menu.save();
-
-    res.json({
-      msg: "Discount applied successfully",
-      menu
+    const vendor = await Vendor.findOne({
+      _id: vendorId,
+      collegeId: req.user.collegeId,
     });
 
-  } catch (error) {
-    console.error("Apply Discount Error:", error.message);
-    res.status(500).json({ msg: "Server error" });
+    if (!vendor) {
+      return res.status(404).json({
+        msg: "Vendor not found",
+      });
+    }
+
+    vendor.isApproved = true;
+    vendor.status = "approved";
+
+    await vendor.save();
+
+    res.json({
+      msg: "Vendor approved successfully",
+      vendor,
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      msg: "Server error",
+    });
   }
 };
