@@ -3,20 +3,15 @@ import API from "../services/api.js";
 export default function renderCart(container) {
   container.innerHTML = "";
 
-  // ================= TITLE =================
   const title = document.createElement("h2");
   title.className = "text-2xl font-bold mb-4 px-6";
   title.textContent = "Your Cart";
-
   container.appendChild(title);
 
-  // ================= CART WRAPPER =================
   const cartBox = document.createElement("div");
   cartBox.className = "p-6";
-
   container.appendChild(cartBox);
 
-  // ================= FETCH CART =================
   async function loadCart() {
     cartBox.innerHTML = "";
 
@@ -37,7 +32,7 @@ export default function renderCart(container) {
 
         const card = document.createElement("div");
         card.className =
-          "flex items-center justify-between bg-white shadow p-4 rounded mb-3";
+          "flex flex-col md:flex-row md:items-center md:justify-between bg-white shadow p-4 rounded mb-3 gap-4";
 
         card.innerHTML = `
           <div class="flex items-center gap-4">
@@ -46,7 +41,7 @@ export default function renderCart(container) {
 
             <div>
               <h3 class="font-bold">${item.name}</h3>
-              <p>₹${item.price} x ${item.quantity}</p>
+              <p>₹${item.price} each</p>
             </div>
           </div>
 
@@ -55,11 +50,53 @@ export default function renderCart(container) {
           </div>
         `;
 
-        // REMOVE BUTTON
+        const controls = document.createElement("div");
+        controls.className = "flex items-center gap-2";
+
+        const minusBtn = document.createElement("button");
+        minusBtn.textContent = "-";
+        minusBtn.className =
+          "bg-gray-200 px-3 py-1 rounded font-bold";
+
+        const qtyText = document.createElement("span");
+        qtyText.textContent = item.quantity;
+        qtyText.className = "font-bold px-2";
+
+        const plusBtn = document.createElement("button");
+        plusBtn.textContent = "+";
+        plusBtn.className =
+          "bg-gray-200 px-3 py-1 rounded font-bold";
+
+        minusBtn.onclick = async () => {
+          if (item.quantity <= 1) return;
+
+          try {
+            await API.put(`/cart/update/${item.menuId}`, {
+              quantity: item.quantity - 1,
+            });
+
+            loadCart();
+          } catch (err) {
+            alert("Failed to update quantity");
+          }
+        };
+
+        plusBtn.onclick = async () => {
+          try {
+            await API.put(`/cart/update/${item.menuId}`, {
+              quantity: item.quantity + 1,
+            });
+
+            loadCart();
+          } catch (err) {
+            alert("Failed to update quantity");
+          }
+        };
+
         const removeBtn = document.createElement("button");
         removeBtn.textContent = "Remove";
         removeBtn.className =
-          "ml-4 bg-red-500 text-white px-3 py-1 rounded";
+          "bg-red-500 text-white px-3 py-1 rounded";
 
         removeBtn.onclick = async () => {
           try {
@@ -70,11 +107,11 @@ export default function renderCart(container) {
           }
         };
 
-        card.appendChild(removeBtn);
+        controls.append(minusBtn, qtyText, plusBtn, removeBtn);
+        card.appendChild(controls);
         cartBox.appendChild(card);
       });
 
-      // ================= TOTAL SECTION =================
       const totalDiv = document.createElement("div");
       totalDiv.className =
         "mt-6 text-xl font-bold flex justify-between bg-gray-100 p-4 rounded";
@@ -86,7 +123,23 @@ export default function renderCart(container) {
 
       cartBox.appendChild(totalDiv);
 
-      // ================= PLACE ORDER BUTTON =================
+      const pickupDiv = document.createElement("div");
+      pickupDiv.className = "mt-4 bg-white shadow p-4 rounded";
+
+      pickupDiv.innerHTML = `
+        <label class="font-semibold block mb-2">
+          Select Pickup Time
+        </label>
+
+        <input
+          id="pickupTime"
+          type="time"
+          class="border p-2 rounded w-full"
+        />
+      `;
+
+      cartBox.appendChild(pickupDiv);
+
       const orderBtn = document.createElement("button");
       orderBtn.textContent = "Place Order";
       orderBtn.className =
@@ -94,11 +147,28 @@ export default function renderCart(container) {
 
       orderBtn.onclick = async () => {
         try {
-          const res = await API.post("/orders/place");
+          const pickupTime =
+            document.querySelector("#pickupTime").value;
+
+          if (!pickupTime) {
+            alert("Please select pickup time");
+            return;
+          }
+
+          const res = await API.post("/orders/place", {
+            pickupTime,
+          });
+
+          const orders = res.data.orders || [];
+
+          for (const order of orders) {
+            await API.post("/orders/payment-success", {
+              orderId: order._id,
+              paymentId: "dummy_payment_" + Date.now(),
+            });
+          }
 
           alert("Order placed successfully!");
-
-          console.log("Order:", res.data);
 
           loadCart();
         } catch (err) {
@@ -110,7 +180,6 @@ export default function renderCart(container) {
       };
 
       cartBox.appendChild(orderBtn);
-
     } catch (err) {
       console.error(err);
       cartBox.innerHTML =

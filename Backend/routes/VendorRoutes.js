@@ -2,11 +2,14 @@ const express = require("express");
 const router = express.Router();
 
 const {
-  getVendorStats,
   applyDiscount,
   toggleVendorCard,
   getVendors,
 } = require("../controllers/vendorController");
+
+const {
+  getVendorStats,
+} = require("../controllers/vendorStatsController");
 
 const {
   verifyToken,

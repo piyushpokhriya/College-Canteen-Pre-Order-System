@@ -6,7 +6,6 @@ import renderOrders from "./orders.js";
 export default function renderUser(root) {
   root.innerHTML = "";
 
-  // ================= HEADER =================
   const header = document.createElement("header");
   header.className =
     "flex justify-between items-center bg-blue-500 text-white p-6";
@@ -28,25 +27,22 @@ export default function renderUser(root) {
   header.append(title, logoutBtn);
   root.appendChild(header);
 
-  // ================= FILTER =================
   const filterDiv = document.createElement("div");
   filterDiv.className = "p-6";
   root.appendChild(filterDiv);
 
-  // ================= STATUS =================
   const statusBar = document.createElement("div");
   statusBar.className =
     "px-6 pb-2 text-lg font-semibold";
   statusBar.textContent = "Showing All Vendors";
   root.appendChild(statusBar);
 
-  // ================= NAV =================
   const navBar = document.createElement("div");
   navBar.className = "flex gap-3 px-6 mb-4";
 
   const menuBtn = document.createElement("button");
   const cartBtn = document.createElement("button");
-  const ordersBtn = document.createElement("button"); // ✅ NEW
+  const ordersBtn = document.createElement("button");
 
   menuBtn.textContent = "Menu";
   cartBtn.textContent = "Cart";
@@ -64,7 +60,6 @@ export default function renderUser(root) {
   navBar.append(menuBtn, cartBtn, ordersBtn);
   root.appendChild(navBar);
 
-  // ================= MAIN CONTENT =================
   const menuDiv = document.createElement("div");
   menuDiv.className =
     "grid grid-cols-1 md:grid-cols-3 gap-6 p-6";
@@ -74,7 +69,6 @@ export default function renderUser(root) {
   cartDiv.className = "p-6 hidden";
   root.appendChild(cartDiv);
 
-  // ================= LOAD MENU =================
   function loadMenu(vendorId = "all", vendor = null) {
     menuDiv.innerHTML = "";
 
@@ -87,9 +81,7 @@ export default function renderUser(root) {
     } else {
       statusBar.textContent =
         vendor.shopName +
-        (vendor.isOpen
-          ? " (Open)"
-          : " (Closed)");
+        (vendor.isOpen ? " (Open)" : " (Closed)");
 
       statusBar.className += vendor.isOpen
         ? " text-green-600"
@@ -99,12 +91,10 @@ export default function renderUser(root) {
     renderMenuGrid(menuDiv, vendorId);
   }
 
-  // ================= FILTER INIT =================
   renderVendorFilter(filterDiv, (vendorId, vendor) => {
     loadMenu(vendorId, vendor);
   });
 
-  // ================= TAB: MENU =================
   menuBtn.onclick = () => {
     menuBtn.className = active;
     cartBtn.className = inactive;
@@ -116,7 +106,6 @@ export default function renderUser(root) {
     loadMenu();
   };
 
-  // ================= TAB: CART =================
   cartBtn.onclick = () => {
     cartBtn.className = active;
     menuBtn.className = inactive;
@@ -129,21 +118,17 @@ export default function renderUser(root) {
     renderCart(cartDiv);
   };
 
-  // ================= TAB: ORDERS =================
   ordersBtn.onclick = () => {
     ordersBtn.className = active;
     menuBtn.className = inactive;
     cartBtn.className = inactive;
 
     menuDiv.classList.add("hidden");
-    cartDiv.classList.add("hidden");
+    cartDiv.classList.remove("hidden");
 
-    menuDiv.innerHTML = "";
     cartDiv.innerHTML = "";
-
-    renderOrders(menuDiv);
+    renderOrders(cartDiv);
   };
 
-  // ================= DEFAULT LOAD =================
   loadMenu();
 }

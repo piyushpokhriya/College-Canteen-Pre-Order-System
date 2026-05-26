@@ -8,6 +8,7 @@ const {
   updateOrderStatus,
   paymentSuccess,
   getVendorOrders,
+  markOrderCompletedByVendor,
 } = require("../controllers/orderController");
 
 const {
@@ -41,6 +42,13 @@ router.get(
   verifyToken,
   isVendor,
   getVendorOrders
+);
+
+router.put(
+  "/vendor/complete/:id",
+  verifyToken,
+  isVendor,
+  markOrderCompletedByVendor
 );
 
 module.exports = router;

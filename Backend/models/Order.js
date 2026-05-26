@@ -14,21 +14,43 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
+    orderCode: {
+      type: String,
+      unique: true,
+    },
+
     items: [
       {
         menuId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Menu",
         },
+
         name: String,
         quantity: Number,
         price: Number,
+
+        discount: {
+          type: Number,
+          default: 0,
+        },
       },
     ],
 
     total: {
       type: Number,
       required: true,
+    },
+
+    pickupTime: {
+      type: String,
+      default: "",
+    },
+
+    pickupDay: {
+      type: String,
+      enum: ["Today", "Next Day"],
+      default: "Today",
     },
 
     status: {

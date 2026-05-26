@@ -1,28 +1,21 @@
-const Razorpay = require("razorpay");
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
 exports.createOrder = async (req, res) => {
   try {
     const { amount } = req.body;
 
-    const options = {
+    const dummyOrder = {
+      id: "dummy_order_" + Date.now(),
       amount: amount * 100,
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
+      status: "created",
+      paymentMode: "DUMMY",
     };
 
-    const order = await razorpay.orders.create(options);
-
-    res.json(order);
-
+    res.status(200).json(dummyOrder);
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      msg: "Payment order creation failed",
+      msg: "Dummy payment order creation failed",
     });
   }
 };

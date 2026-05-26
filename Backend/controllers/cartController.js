@@ -4,7 +4,15 @@ const Menu = require("../models/Menu");
 // ================= ADD TO CART =================
 exports.addToCart = async (req, res) => {
   try {
-    const { menuId } = req.body;
+    const { menuId, quantity } = req.body;
+
+    const qty = Number(quantity) || 1;
+
+    if (qty < 1) {
+      return res.status(400).json({
+        msg: "Quantity must be at least 1",
+      });
+    }
 
     const menu = await Menu.findById(menuId);
 
@@ -27,7 +35,7 @@ exports.addToCart = async (req, res) => {
     );
 
     if (existing) {
-      existing.quantity += 1;
+      existing.quantity += qty;
     } else {
       cart.items.push({
         menuId: menu._id,
@@ -35,7 +43,7 @@ exports.addToCart = async (req, res) => {
         name: menu.name,
         image: menu.image,
         price: menu.price,
-        quantity: 1,
+        quantity: qty,
       });
     }
 
@@ -54,9 +62,55 @@ exports.addToCart = async (req, res) => {
 // ================= GET CART =================
 exports.getCart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ userId: req.user.id });
+    const cart = await Cart.findOne({
+      userId: req.user.id,
+    }).populate("items.vendorId", "shopName isActive isOpen");
 
     res.json(cart || { items: [] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// ================= UPDATE QUANTITY =================
+exports.updateCartQuantity = async (req, res) => {
+  try {
+    const { menuId } = req.params;
+    const { quantity } = req.body;
+
+    const qty = Number(quantity);
+
+    if (!qty || qty < 1) {
+      return res.status(400).json({
+        msg: "Quantity must be at least 1",
+      });
+    }
+
+    const cart = await Cart.findOne({ userId: req.user.id });
+
+    if (!cart) {
+      return res.status(404).json({ msg: "Cart not found" });
+    }
+
+    const item = cart.items.find(
+      (i) => i.menuId.toString() === menuId
+    );
+
+    if (!item) {
+      return res.status(404).json({
+        msg: "Item not found in cart",
+      });
+    }
+
+    item.quantity = qty;
+
+    await cart.save();
+
+    res.json({
+      msg: "Quantity updated",
+      cart,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error" });

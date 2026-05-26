@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   addToCart,
   getCart,
+  updateCartQuantity,
   removeFromCart,
   clearCart,
 } = require("../controllers/cartController");
@@ -29,20 +30,29 @@ router.get(
   getCart
 );
 
+// ================= UPDATE QUANTITY =================
+router.put(
+  "/update/:menuId",
+  verifyToken,
+  isStudent,
+  updateCartQuantity
+);
+
+// ================= CLEAR CART =================
+// IMPORTANT: keep this before "/:menuId"
+router.delete(
+  "/clear",
+  verifyToken,
+  isStudent,
+  clearCart
+);
+
 // ================= REMOVE ITEM =================
 router.delete(
   "/:menuId",
   verifyToken,
   isStudent,
   removeFromCart
-);
-
-// ================= CLEAR CART =================
-router.delete(
-  "/clear",
-  verifyToken,
-  isStudent,
-  clearCart
 );
 
 module.exports = router;

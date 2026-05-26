@@ -11,28 +11,24 @@ export function renderAdminLogin(root) {
   title.textContent = "Admin Login";
   title.className = "text-2xl font-bold mb-6 text-center";
 
-  // EMAIL
   const email = document.createElement("input");
   email.type = "email";
   email.placeholder = "Email";
   email.className = "w-full p-3 mb-4 border rounded";
 
-  // PASSWORD
   const password = document.createElement("input");
   password.type = "password";
   password.placeholder = "Password";
   password.className = "w-full p-3 mb-4 border rounded";
 
-  // ERROR
   const error = document.createElement("p");
   error.className = "text-red-500 text-sm mb-3 hidden";
 
-  // BUTTON
   const btn = document.createElement("button");
   btn.textContent = "Login";
   btn.className = "w-full bg-yellow-500 text-white py-3 rounded";
 
-  btn.onclick = async () => {
+  async function handleLogin() {
     error.classList.add("hidden");
 
     const emailValue = email.value.trim();
@@ -76,7 +72,15 @@ export function renderAdminLogin(root) {
       btn.disabled = false;
       btn.textContent = "Login";
     }
-  };
+  }
+
+  btn.onclick = handleLogin;
+
+  container.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      handleLogin();
+    }
+  });
 
   container.append(title, error, email, password, btn);
   root.appendChild(container);

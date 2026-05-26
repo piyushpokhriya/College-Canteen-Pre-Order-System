@@ -11,13 +11,12 @@ export async function renderVendorFilter(container, onChange) {
     const res = await API.get("/vendor");
     const vendors = res.data;
 
-    // default
     const defaultOpt = document.createElement("option");
     defaultOpt.value = "all";
     defaultOpt.textContent = "All Vendors";
     select.appendChild(defaultOpt);
 
-    vendors.forEach(v => {
+    vendors.forEach((v) => {
       const opt = document.createElement("option");
       opt.value = v._id;
       opt.textContent = v.shopName;
@@ -27,19 +26,17 @@ export async function renderVendorFilter(container, onChange) {
     select.onchange = () => {
       const selectedId = select.value;
 
-      const selectedVendor = vendors.find(v => v._id === selectedId);
+      const selectedVendor = vendors.find(
+        (v) => v._id === selectedId
+      );
 
-      // Pass vendor object
       onChange(selectedId, selectedVendor);
     };
-
   } catch (err) {
-  console.error(err);
+    console.error(err);
 
-  select.innerHTML = `
-    <option value="all">All Vendors</option>
-  `;
+    select.innerHTML = `
+      <option value="all">All Vendors</option>
+    `;
+  }
 }
-}
-
-

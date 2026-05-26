@@ -10,7 +10,10 @@ const createMenu = async (req, res) => {
       return res.status(400).json({ msg: "Name and price required" });
     }
 
-    const vendor = await Vendor.findOne({ owner: req.user.id });
+    const vendor = await Vendor.findOne({
+      owner: req.user.id,
+      collegeId: req.user.collegeId,
+    });
 
     if (!vendor) {
       return res.status(400).json({ msg: "Vendor not found" });
@@ -50,7 +53,8 @@ const getAllMenu = async (req, res) => {
       query.vendorId = vendorId;
     }
 
-    const items = await Menu.find(query);
+    const items = await Menu.find(query)
+      .populate("vendorId", "shopName isActive isOpen");
 
     const result = items.map((item) => {
       const finalPrice =
@@ -72,7 +76,10 @@ const getAllMenu = async (req, res) => {
 // ================= GET VENDOR MENU =================
 const getVendorMenu = async (req, res) => {
   try {
-    const vendor = await Vendor.findOne({ owner: req.user.id });
+    const vendor = await Vendor.findOne({
+      owner: req.user.id,
+      collegeId: req.user.collegeId,
+    });
 
     if (!vendor) {
       return res.status(400).json({ msg: "Vendor not found" });
@@ -94,7 +101,10 @@ const updateMenu = async (req, res) => {
 
     if (!menu) return res.status(404).json({ msg: "Not found" });
 
-    const vendor = await Vendor.findOne({ owner: req.user.id });
+    const vendor = await Vendor.findOne({
+      owner: req.user.id,
+      collegeId: req.user.collegeId,
+    });
 
     if (!vendor || menu.vendorId.toString() !== vendor._id.toString()) {
       return res.status(403).json({ msg: "Not allowed" });
@@ -124,7 +134,10 @@ const deleteMenu = async (req, res) => {
 
     if (!menu) return res.status(404).json({ msg: "Not found" });
 
-    const vendor = await Vendor.findOne({ owner: req.user.id });
+    const vendor = await Vendor.findOne({
+      owner: req.user.id,
+      collegeId: req.user.collegeId,
+    });
 
     if (!vendor || menu.vendorId.toString() !== vendor._id.toString()) {
       return res.status(403).json({ msg: "Not allowed" });
@@ -158,7 +171,10 @@ const applyDiscount = async (req, res) => {
       return res.status(404).json({ msg: "Item not found" });
     }
 
-    const vendor = await Vendor.findOne({ owner: req.user.id });
+    const vendor = await Vendor.findOne({
+      owner: req.user.id,
+      collegeId: req.user.collegeId,
+    });
 
     if (!vendor || menu.vendorId.toString() !== vendor._id.toString()) {
       return res.status(403).json({ msg: "Not allowed" });
@@ -183,7 +199,10 @@ const toggleAvailability = async (req, res) => {
       return res.status(404).json({ msg: "Not found" });
     }
 
-    const vendor = await Vendor.findOne({ owner: req.user.id });
+    const vendor = await Vendor.findOne({
+      owner: req.user.id,
+      collegeId: req.user.collegeId,
+    });
 
     if (!vendor || menu.vendorId.toString() !== vendor._id.toString()) {
       return res.status(403).json({ msg: "Not allowed" });
@@ -206,6 +225,7 @@ const getTopItems = async (req, res) => {
       collegeId: req.user.collegeId,
       isAvailable: true,
     })
+      .populate("vendorId", "shopName isActive isOpen")
       .sort({ price: 1 })
       .limit(6);
 
@@ -216,7 +236,6 @@ const getTopItems = async (req, res) => {
   }
 };
 
-// ✅ FINAL EXPORT (IMPORTANT FIX)
 module.exports = {
   createMenu,
   getAllMenu,

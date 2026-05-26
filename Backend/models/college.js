@@ -1,20 +1,20 @@
-const mongoose = require("mongoose");
+const express = require("express");
+const router = express.Router();
 
-const collegeSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      lowercase: true,
-    },
-    openingTime: String,
-    closingTime: String,
-  },
-  { timestamps: true }
-);
+const {
+  addTimeSlot,
+  getSlots,
+  deleteSlot,
+} = require("../controllers/timeSlotController");
 
-module.exports =
-  mongoose.models.College ||
-  mongoose.model("College", collegeSchema);
+const {
+  verifyToken,
+  isAdmin,
+} = require("../middleware/authMiddleware");
+
+// ADMIN ONLY
+router.post("/", verifyToken, isAdmin, addTimeSlot);
+router.get("/", verifyToken, isAdmin, getSlots);
+router.delete("/:id", verifyToken, isAdmin, deleteSlot);
+
+module.exports = router;

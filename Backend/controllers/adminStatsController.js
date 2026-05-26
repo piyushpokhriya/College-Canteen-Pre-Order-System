@@ -6,47 +6,88 @@ exports.getAdminStats = async (req, res) => {
   try {
     const collegeId = req.user.collegeId;
 
-    const totalVendors =
-      await Vendor.countDocuments({ collegeId });
+    const totalVendors = await Vendor.countDocuments({
+      collegeId,
+    });
 
-    const pendingVendors =
-      await Vendor.countDocuments({
-        collegeId,
-        status: "pending",
-      });
+    const pendingVendors = await Vendor.countDocuments({
+      collegeId,
+      status: "pending",
+    });
 
-    const approvedVendors =
-      await Vendor.countDocuments({
-        collegeId,
-        status: "approved",
-      });
+    const approvedVendors = await Vendor.countDocuments({
+      collegeId,
+      status: "approved",
+    });
+
+    const allVendors = await Vendor.find({
+      collegeId,
+      status: "approved",
+    });
 
     const orders = await Order.find({
       collegeId,
     }).populate("vendorId", "shopName");
 
-    let totalRevenue = 0;
+    const paidOrders = orders.filter(
+      (order) => order.paymentStatus === "Paid"
+    );
+
+    const today = new Date();
 
     const vendorRevenueMap = {};
 
-    orders.forEach((order) => {
+    allVendors.forEach((vendor) => {
+      vendorRevenueMap[vendor._id.toString()] = {
+        vendorId: vendor._id.toString(),
+        shopName: vendor.shopName,
+        totalRevenue: 0,
+        monthlyRevenue: 0,
+        todayRevenue: 0,
+        totalOrders: 0,
+      };
+    });
 
-      if (order.paymentStatus === "Paid") {
-        totalRevenue += order.total;
+    let totalRevenue = 0;
+
+    paidOrders.forEach((order) => {
+      if (!order.vendorId) return;
+
+      const vendorId = order.vendorId._id.toString();
+
+      if (!vendorRevenueMap[vendorId]) {
+        vendorRevenueMap[vendorId] = {
+          vendorId,
+          shopName: order.vendorId.shopName || "Unknown Vendor",
+          totalRevenue: 0,
+          monthlyRevenue: 0,
+          todayRevenue: 0,
+          totalOrders: 0,
+        };
       }
 
-      if (order.vendorId) {
+      totalRevenue += order.total;
 
-        const id = order.vendorId._id.toString();
+      vendorRevenueMap[vendorId].totalRevenue += order.total;
+      vendorRevenueMap[vendorId].totalOrders += 1;
 
-        if (!vendorRevenueMap[id]) {
-          vendorRevenueMap[id] = {
-            shopName: order.vendorId.shopName,
-            revenue: 0,
-          };
-        }
+      const orderDate = new Date(order.createdAt);
 
-        vendorRevenueMap[id].revenue += order.total;
+      const isThisMonth =
+        orderDate.getMonth() === today.getMonth() &&
+        orderDate.getFullYear() === today.getFullYear();
+
+      const isToday =
+        orderDate.getDate() === today.getDate() &&
+        orderDate.getMonth() === today.getMonth() &&
+        orderDate.getFullYear() === today.getFullYear();
+
+      if (isThisMonth) {
+        vendorRevenueMap[vendorId].monthlyRevenue += order.total;
+      }
+
+      if (isToday) {
+        vendorRevenueMap[vendorId].todayRevenue += order.total;
       }
     });
 
@@ -56,9 +97,8 @@ exports.getAdminStats = async (req, res) => {
       approvedVendors,
       totalOrders: orders.length,
       totalRevenue,
-      vendorRevenueMap,
+      vendors: Object.values(vendorRevenueMap),
     });
-
   } catch (err) {
     console.error(err);
 

@@ -8,7 +8,19 @@ exports.applyDiscount = async (req, res) => {
     const { id } = req.params;
     const { discount } = req.body;
 
-    const menu = await Menu.findById(id);
+    const vendor = await Vendor.findOne({
+      owner: req.user.id,
+      collegeId: req.user.collegeId,
+    });
+
+    if (!vendor) {
+      return res.status(404).json({ msg: "Vendor profile not found" });
+    }
+
+    const menu = await Menu.findOne({
+      _id: id,
+      vendorId: vendor._id,
+    });
 
     if (!menu) {
       return res.status(404).json({ msg: "Menu item not found" });
@@ -21,88 +33,51 @@ exports.applyDiscount = async (req, res) => {
       msg: "Discount updated successfully",
       menu,
     });
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error" });
   }
 };
 
-// ================= VENDOR STATS =================
-exports.getVendorStats = async (req, res) => {
-  try {
-    const vendorId = req.user.id;
-
-    const orders = await Order.find({
-      vendorId,
-      paymentStatus: "Paid",
-    });
-
-    let totalRevenue = 0;
-    let afterDiscountRevenue = 0;
-
-    for (const order of orders) {
-      for (const item of order.items) {
-        const itemTotal = item.price * item.quantity;
-
-        totalRevenue += itemTotal;
-
-        const discount = item.discount || 0;
-
-        const final = discount > 0
-          ? itemTotal - (itemTotal * discount) / 100
-          : itemTotal;
-
-        afterDiscountRevenue += final;
-      }
-    }
-
-    res.json({
-      totalOrders: orders.length,
-      totalRevenue,
-      afterDiscountRevenue,
-    });
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ msg: "Error loading stats" });
-  }
-};
-
-// ================= TOGGLE SHOP (NEW FEATURE) =================
+// ================= TOGGLE SHOP =================
 exports.toggleVendorCard = async (req, res) => {
   try {
-    const vendor = await Vendor.findById(req.user.id);
+    const vendor = await Vendor.findOne({
+      owner: req.user.id,
+      collegeId: req.user.collegeId,
+    });
 
     if (!vendor) {
       return res.status(404).json({ msg: "Vendor not found" });
     }
 
     vendor.isActive = !vendor.isActive;
+    vendor.isOpen = vendor.isActive;
+
     await vendor.save();
 
     res.json({
-      msg: "Vendor status updated",
+      msg: vendor.isActive
+        ? "Shop opened successfully"
+        : "Shop closed successfully",
       isActive: vendor.isActive,
+      isOpen: vendor.isOpen,
     });
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error" });
   }
 };
 
-// ================= GET VENDORS (USER SIDE FIX) =================
+// ================= GET VENDORS USER SIDE =================
 exports.getVendors = async (req, res) => {
   try {
     const vendors = await Vendor.find({
       collegeId: req.user.collegeId,
       isApproved: true,
-      isActive: true
     });
 
     res.json(vendors);
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ msg: "Server error" });

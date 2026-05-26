@@ -34,7 +34,7 @@ export function renderVendorSignup(root) {
     "w-full bg-purple-600 text-white py-3 rounded hover:bg-purple-700";
   signupBtn.textContent = "Create Vendor Account";
 
-  signupBtn.onclick = async () => {
+  async function handleSignup() {
     messageBox.className = "text-sm mb-4 hidden";
 
     const shopName = shopInput.value.trim();
@@ -54,13 +54,13 @@ export function renderVendorSignup(root) {
       signupBtn.textContent = "Creating Account...";
 
       const res = await API.post("/auth/signup", {
-      shopName,
-      name,
-      email,
-      password,
-      collegeName,
-      role: "vendor",
-    });
+        shopName,
+        name,
+        email,
+        password,
+        collegeName,
+        role: "vendor",
+      });
 
       messageBox.textContent =
         res.data.msg ||
@@ -68,7 +68,6 @@ export function renderVendorSignup(root) {
 
       messageBox.className =
         "text-green-600 text-sm mb-4";
-
     } catch (err) {
       console.error(err);
 
@@ -82,7 +81,15 @@ export function renderVendorSignup(root) {
       signupBtn.disabled = false;
       signupBtn.textContent = "Create Vendor Account";
     }
-  };
+  }
+
+  signupBtn.onclick = handleSignup;
+
+  container.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      handleSignup();
+    }
+  });
 
   const toggle = document.createElement("p");
   toggle.className =

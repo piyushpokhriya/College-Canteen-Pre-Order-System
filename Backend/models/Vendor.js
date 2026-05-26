@@ -43,7 +43,7 @@ const vendorSchema = new mongoose.Schema(
       default: "pending",
     },
 
-    // 💰 IMPORTANT: EARNING TRACKING
+    // IMPORTANT: EARNING TRACKING
     walletBalance: {
       type: Number,
       default: 0,

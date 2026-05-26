@@ -16,7 +16,7 @@ export function renderUserSignup(root) {
   const errorBox = document.createElement("p");
   errorBox.className = "text-red-500 text-sm mb-3 hidden";
 
-  // ================= INPUT CREATOR (REDUCES REDUNDANCY) =================
+  // ================= INPUT CREATOR =================
   const createInput = (type, placeholder) => {
     const input = document.createElement("input");
     input.type = type;
@@ -36,7 +36,8 @@ export function renderUserSignup(root) {
     "w-full bg-green-500 text-white py-3 rounded hover:bg-green-600";
   signupBtn.textContent = "Signup";
 
-  signupBtn.onclick = async () => {
+  // ================= SIGNUP HANDLER =================
+  async function handleSignup() {
     errorBox.classList.add("hidden");
 
     const name = nameInput.value.trim();
@@ -71,6 +72,10 @@ export function renderUserSignup(root) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data?.user?.role || "student");
 
+      if (data?.user?.collegeId) {
+        localStorage.setItem("collegeId", data.user.collegeId);
+      }
+
       location.reload();
     } catch (err) {
       console.error("Signup error:", err);
@@ -80,7 +85,16 @@ export function renderUserSignup(root) {
       signupBtn.disabled = false;
       signupBtn.textContent = "Signup";
     }
-  };
+  }
+
+  signupBtn.onclick = handleSignup;
+
+  // ================= ENTER KEY SIGNUP =================
+  container.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      handleSignup();
+    }
+  });
 
   // ================= LOGIN LINK =================
   const toggle = document.createElement("p");

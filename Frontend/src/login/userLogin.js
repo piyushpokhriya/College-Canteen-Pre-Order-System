@@ -40,14 +40,13 @@ export function renderUserLogin(root) {
   loginBtn.textContent = "Login";
 
   // ================= LOGIN HANDLER =================
-  loginBtn.onclick = async () => {
+  async function handleLogin() {
     errorBox.classList.add("hidden");
 
     const collegeName = collegeInput.value.trim();
     const email = emailInput.value.trim();
     const password = passwordInput.value.trim();
 
-    // validation
     if (!collegeName || !email || !password) {
       errorBox.textContent = "All fields are required";
       errorBox.classList.remove("hidden");
@@ -64,7 +63,6 @@ export function renderUserLogin(root) {
         password,
       });
 
-      // ===== SAFE RESPONSE HANDLING =====
       const data = res?.data;
 
       const token = data?.token;
@@ -74,12 +72,14 @@ export function renderUserLogin(root) {
         throw new Error("Token not received");
       }
 
-      // ================= STORE AUTH =================
       localStorage.setItem("token", token);
       localStorage.setItem("role", user?.role || "student");
 
-      location.reload();
+      if (user?.collegeId) {
+        localStorage.setItem("collegeId", user.collegeId);
+      }
 
+      location.reload();
     } catch (err) {
       console.error("Login error:", err);
       errorBox.textContent = "Login failed. Check credentials.";
@@ -88,7 +88,16 @@ export function renderUserLogin(root) {
       loginBtn.disabled = false;
       loginBtn.textContent = "Login";
     }
-  };
+  }
+
+  loginBtn.onclick = handleLogin;
+
+  // ================= ENTER KEY LOGIN =================
+  container.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      handleLogin();
+    }
+  });
 
   // ================= SIGNUP LINK =================
   const toggle = document.createElement("p");

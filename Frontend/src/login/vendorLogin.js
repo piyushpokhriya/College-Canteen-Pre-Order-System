@@ -16,7 +16,7 @@ export function renderVendorLogin(root) {
   const errorBox = document.createElement("p");
   errorBox.className = "text-red-500 text-sm mb-3 hidden";
 
-  // ================= INPUT CREATOR (REDUCES REDUNDANCY) =================
+  // ================= INPUT CREATOR =================
   const createInput = (type, placeholder) => {
     const input = document.createElement("input");
     input.type = type;
@@ -35,7 +35,8 @@ export function renderVendorLogin(root) {
     "w-full bg-purple-500 text-white py-3 rounded hover:bg-purple-600";
   loginBtn.textContent = "Login";
 
-  loginBtn.onclick = async () => {
+  // ================= LOGIN HANDLER =================
+  async function handleLogin() {
     errorBox.classList.add("hidden");
 
     const collegeName = collegeInput.value.trim();
@@ -67,6 +68,10 @@ export function renderVendorLogin(root) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data?.user?.role || "vendor");
 
+      if (data?.user?.collegeId) {
+        localStorage.setItem("collegeId", data.user.collegeId);
+      }
+
       location.reload();
     } catch (err) {
       console.error("Vendor login error:", err);
@@ -76,7 +81,16 @@ export function renderVendorLogin(root) {
       loginBtn.disabled = false;
       loginBtn.textContent = "Login";
     }
-  };
+  }
+
+  loginBtn.onclick = handleLogin;
+
+  // ================= ENTER KEY LOGIN =================
+  container.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      handleLogin();
+    }
+  });
 
   // ================= SIGNUP LINK =================
   const toggle = document.createElement("p");

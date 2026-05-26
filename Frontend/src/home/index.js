@@ -45,7 +45,7 @@ export default async function renderHome(root) {
 
   const topTitle = document.createElement("h2");
   topTitle.className = "text-2xl font-bold mb-6 text-center";
-  topTitle.textContent = "🔥 Top Items";
+  topTitle.textContent = "Top Items";
 
   const grid = document.createElement("div");
   grid.className =

@@ -13,14 +13,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔥 DEBUG MIDDLEWARE
+// DEBUG MIDDLEWARE
 app.use((req, res, next) => {
-  console.log("🔥 REQUEST:", req.method, req.url);
+  console.log("REQUEST:", req.method, req.url);
   next();
 });
 
 // ================= STATIC FILES =================
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"))
+);
 
 // ================= ROUTES IMPORT =================
 const authRoutes = require("./routes/authRoutes");
@@ -29,33 +32,43 @@ const menuRoutes = require("./routes/menuRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const cartRoutes = require("./routes/cartRoutes");
-
-// ⭐ PAYMENT ROUTES (NEW)
 const paymentRoutes = require("./routes/paymentRoutes");
+
+// TIME SLOT ROUTES
+const timeSlotRoutes = require("./routes/timeSlotRoutes");
 
 // ================= ROUTES USE =================
 app.use("/api/auth", authRoutes);
+
 app.use("/api/vendor", vendorRoutes);
+
 app.use("/api/menu", menuRoutes);
 
 // ✔ IMPORTANT FIX (orders not order)
 app.use("/api/orders", orderRoutes);
 
 app.use("/api/admin", adminRoutes);
+
 app.use("/api/cart", cartRoutes);
 
-// ⭐ PAYMENT API
+// PAYMENT API
 app.use("/api/payment", paymentRoutes);
+
+// TIME SLOT API
+app.use("/api/timeslots", timeSlotRoutes);
 
 // ================= HOME ROUTE =================
 app.get("/", (req, res) => {
-  res.send("API Running Successfully 🚀");
+  res.send("API Running Successfully");
 });
 
 // ================= ERROR HANDLER =================
 app.use((err, req, res, next) => {
-  console.error("🔥 SERVER ERROR:", err.message);
-  res.status(500).json({ msg: "Internal Server Error" });
+  console.error("SERVER ERROR:", err.message);
+
+  res.status(500).json({
+    msg: "Internal Server Error",
+  });
 });
 
 // ================= START SERVER =================
@@ -66,12 +79,19 @@ const startServer = async () => {
     await connectDB();
 
     app.listen(PORT, () => {
-      console.log("✅ MongoDB Connected");
-      console.log(`🚀 Server running at http://localhost:${PORT}`);
+      console.log("MongoDB Connected");
+
+      console.log(
+        `Server running at http://localhost:${PORT}`
+      );
     });
 
   } catch (error) {
-    console.error("❌ DB Connection Failed:", error.message);
+    console.error(
+      "DB Connection Failed:",
+      error.message
+    );
+
     process.exit(1);
   }
 };
